@@ -1,0 +1,31 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Nova Categoria</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <form>
+
+    <ion-item>
+      <ion-label position="stacked">Nome da categoria</ion-label>
+      <ion-input
+        [(ngModel)]="nome"
+        name="nome"
+        placeholder="Ex.: Bebidas, Comida, Decoração"
+        required>
+      </ion-input>
+    </ion-item>
+
+    <ion-button
+      expand="block"
+      class="ion-margin-top"
+      [disabled]="!nome"
+      (click)="salvar()">
+      Salvar
+    </ion-button>
+
+  </form>
+
+</ion-content>

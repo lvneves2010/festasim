@@ -1,22 +1,32 @@
 import { NgModule } from '@angular/core';
-import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
   {
-    path: 'home',
-    loadChildren: () => import('./home/home.module').then( m => m.HomePageModule)
+    path: '',
+    loadChildren: () =>
+      import('./tabs/tabs.module').then(m => m.TabsPageModule)
   },
   {
-    path: '',
-    redirectTo: 'home',
-    pathMatch: 'full'
+    path: 'convidados-form',
+    loadChildren: () => import('./pages/convidados-form/convidados-form.module').then( m => m.ConvidadosFormPageModule)
   },
+  {
+    path: 'financeiro',
+    loadChildren: () => import('./pages/financeiro/financeiro.module').then( m => m.FinanceiroPageModule)
+  },
+  {
+    path: 'financeiro-categoria-form',
+    loadChildren: () => import('./pages/financeiro-categoria-form/financeiro-categoria-form.module').then( m => m.FinanceiroCategoriaFormPageModule)
+  },
+  {
+    path: 'financeiro-item-form',
+    loadChildren: () => import('./pages/financeiro-item-form/financeiro-item-form.module').then( m => m.FinanceiroItemFormPageModule)
+  }
 ];
 
 @NgModule({
-  imports: [
-    RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })
-  ],
+  imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}
