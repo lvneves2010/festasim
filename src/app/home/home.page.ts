@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { EventosService } from '../services/eventos.service';
 import { ConvidadosService } from '../services/convidados.service';
@@ -15,7 +17,9 @@ import { TarefaGet, StatusTarefa } from '../models/tarefa-get.model';
   styleUrls: ['home.page.scss'],
   standalone: false
 })
-export class HomePage {
+export class HomePage implements OnDestroy {
+
+  private destroy$ = new Subject<void>();
 
   appVersion = environment.appVersion;
   evento?: EventoGet;
@@ -33,6 +37,11 @@ export class HomePage {
     private financeiroService: FinanceiroService
   ) {}
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   ionViewWillEnter() {
     this.carregarDashboard();
   }
@@ -40,20 +49,23 @@ export class HomePage {
   carregarDashboard() {
     this.carregando = true;
 
-    this.eventosService.getEventoAtivo().subscribe({
+    this.eventosService.getEventoAtivo().pipe(takeUntil(this.destroy$)).subscribe({
       next: evento => {
         this.evento = evento;
 
         this.convidadosService
           .getConvidadosPorEvento(evento.id)
+          .pipe(takeUntil(this.destroy$))
           .subscribe(c => this.convidados = c);
 
         this.tarefasService
           .getTarefasPorEvento(evento.id)
+          .pipe(takeUntil(this.destroy$))
           .subscribe(t => this.tarefas = t);
 
         this.financeiroService
           .getItensPorEvento(evento.id)
+          .pipe(takeUntil(this.destroy$))
           .subscribe(i => {
             this.itensFinanceiros = i;
             this.carregando = false;
@@ -90,7 +102,11 @@ export class HomePage {
 
   // ====== CRONOGRAMA ======
   get tarefasPendentes(): number {
-    return this.tarefas.filter(t => t.status !== StatusTarefa.Concluida).length;
+    return this.tarefas.filter(t => t.status === StatusTarefa.Pendente).length;
+  }
+
+  get tarefasEmAndamento(): number {
+    return this.tarefas.filter(t => t.status === StatusTarefa.EmAndamento).length;
   }
 
   get tarefasConcluidas(): number {

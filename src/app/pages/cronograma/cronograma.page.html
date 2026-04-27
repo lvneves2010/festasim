@@ -48,9 +48,10 @@
         <!-- Select invisível, apenas para interação -->
         <ion-select
           #statusSelect
+          name="statusSelect-{{tarefa.id}}"
           interface="popover"
           [(ngModel)]="tarefa.status"
-          (ionChange)="alterarStatus(tarefa)"
+          (ionChange)="alterarStatus(tarefa, $event)"
           class="hidden-select">
 
           <ion-select-option [value]="0">Pendente</ion-select-option>

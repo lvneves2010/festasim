@@ -104,17 +104,32 @@ export class CronogramaPage {
     });
   }
 
-  alterarStatus(tarefa: TarefaGet) {
+  alterarStatus(tarefa: TarefaGet, event: CustomEvent) {
+    if (!this.evento) {
+      console.error('Evento ativo nao encontrado ao atualizar status.');
+      return;
+    }
+
+    const novoStatus = Number(event.detail.value);
+    const statusAnterior = tarefa.status;
+    tarefa.status = novoStatus as StatusTarefa;
+
     this.tarefasService.atualizarTarefa(tarefa.id, {
+      id: tarefa.id,
       descricao: tarefa.descricao,
-      dataLimite: this.toDateOnly(tarefa.dataLimite),
-      status: tarefa.status
+      dataLimite: tarefa.dataLimite,
+      status: novoStatus
     }).subscribe({
       next: async () => {
         await this.exibirToast('Status atualizado.', 'success');
       },
       error: async err => {
-        console.error('Erro ao atualizar status da tarefa', err);
+        console.error('Erro ao atualizar status da tarefa', err, { payload: {
+          descricao: tarefa.descricao,
+          dataLimite: this.toDateOnly(tarefa.dataLimite),
+          status: novoStatus
+        }});
+        tarefa.status = statusAnterior;
         await this.exibirToast('Erro ao atualizar status.', 'danger');
       }
     });
@@ -153,6 +168,7 @@ export class CronogramaPage {
             tarefa.dataLimite = dataLimite;
 
             this.tarefasService.atualizarTarefa(tarefa.id, {
+              id: tarefa.id,
               descricao,
               dataLimite,
               status: tarefa.status
