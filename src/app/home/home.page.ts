@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { environment } from '../../environments/environment';
 import { EventosService } from '../services/eventos.service';
 import { ConvidadosService } from '../services/convidados.service';
 import { TarefasService } from '../services/tarefas.service';
@@ -16,6 +17,7 @@ import { TarefaGet, StatusTarefa } from '../models/tarefa-get.model';
 })
 export class HomePage {
 
+  appVersion = environment.appVersion;
   evento?: EventoGet;
 
   convidados: ConvidadoGet[] = [];
@@ -69,8 +71,21 @@ export class HomePage {
     return this.convidados.length;
   }
 
+  get totalConvidadosComAcompanhantes(): number {
+    return this.convidados.reduce(
+      (total, convidado) => total + 1 + (convidado.quantidadeAcompanhantes || 0),
+      0
+    );
+  }
+
   get totalConfirmados(): number {
     return this.convidados.filter(c => c.confirmacaoPresenca === true).length;
+  }
+
+  get totalConfirmadosComAcompanhantes(): number {
+    return this.convidados
+      .filter(c => c.confirmacaoPresenca === true)
+      .reduce((total, convidado) => total + 1 + (convidado.quantidadeAcompanhantes || 0), 0);
   }
 
   // ====== CRONOGRAMA ======

@@ -6,7 +6,9 @@
 
 <ion-content class="ion-padding">
 
-  <form>
+  <ion-spinner *ngIf="carregando"></ion-spinner>
+
+  <form *ngIf="!carregando">
 
     <ion-item>
       <ion-label position="stacked">Nome da categoria</ion-label>
@@ -19,9 +21,10 @@
     </ion-item>
 
     <ion-button
+      type="button"
       expand="block"
       class="ion-margin-top"
-      [disabled]="!nome"
+      [disabled]="!nome || !eventoId || carregando"
       (click)="salvar()">
       Salvar
     </ion-button>

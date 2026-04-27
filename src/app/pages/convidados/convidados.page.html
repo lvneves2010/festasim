@@ -23,10 +23,19 @@
         <ion-label>
           <h2>{{ convidado.nome }}</h2>
           <p>{{ convidado.email }}</p>
+          <p>Acompanhantes: <strong>{{ convidado.quantidadeAcompanhantes || 0 }}</strong></p>
+          <ion-buttons class="acompanhantes-actions">
+            <ion-button size="small" fill="outline" (click)="alterarAcompanhantes(convidado, -1)">
+              <ion-icon name="remove-outline"></ion-icon>
+            </ion-button>
+            <ion-button size="small" fill="outline" (click)="alterarAcompanhantes(convidado, 1)">
+              <ion-icon name="add-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
           <ion-chip
             class="status-chip"
             [color]="statusColor(convidado)"
-            (click)="abrirSelectorStatus(statusSelect)">
+            (click)="editarConfirmacao(convidado)">
 
             <ion-label>
               {{ textoConfirmacao(convidado.confirmacaoPresenca) }}
@@ -34,27 +43,9 @@
 
           </ion-chip>
 
-        <!-- Select invisível, apenas para interação -->
-        <ion-select
-          #statusSelect
-          interface="popover"
-          [(ngModel)]="convidado.confirmacaoPresenca"
-          (ionChange)="alterarConfirmacao(convidado)"
-          class="hidden-select">
-
-          <ion-select-option [value]="null">
-            Pendente
-          </ion-select-option>
-
-          <ion-select-option [value]="true">
-            Confirmado
-          </ion-select-option>
-
-          <ion-select-option [value]="false">
-            Não vai
-          </ion-select-option>
-
-        </ion-select>
+          <ion-button size="small" fill="clear" (click)="editarConvidado(convidado)">
+            Editar dados
+          </ion-button>
         </ion-label>
       </ion-item>
 

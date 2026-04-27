@@ -63,6 +63,11 @@
 
     <ion-item-options side="end">
       <ion-item-option
+        color="primary"
+        (click)="editarItem(item)">
+        Editar
+      </ion-item-option>
+      <ion-item-option
         color="danger"
         (click)="deletarItem(item.id)">
         Excluir

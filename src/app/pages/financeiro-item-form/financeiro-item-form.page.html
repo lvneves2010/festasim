@@ -6,7 +6,9 @@
 
 <ion-content class="ion-padding">
 
-  <form>
+  <ion-spinner *ngIf="carregando"></ion-spinner>
+
+  <form *ngIf="!carregando">
 
     <!-- Categoria -->
     <ion-item>
@@ -23,6 +25,10 @@
         </ion-select-option>
       </ion-select>
     </ion-item>
+
+    <ion-text color="medium" *ngIf="categorias.length === 0">
+      Nenhuma categoria encontrada. Cadastre uma categoria primeiro.
+    </ion-text>
 
     <!-- Descrição -->
     <ion-item>
@@ -49,9 +55,13 @@
     </ion-item>
 
     <ion-button
+      type="button"
       expand="block"
       class="ion-margin-top"
       [disabled]="
+        carregando ||
+        !eventoId ||
+        categorias.length === 0 ||
         !form.categoriaFinanceiraId ||
         !form.descricao ||
         form.valorPrevisto <= 0

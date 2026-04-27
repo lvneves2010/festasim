@@ -13,24 +13,50 @@ export class FinanceiroCategoriaFormPage {
 
   nome = '';
   eventoId?: number;
+  carregando = false;
 
   constructor(
     private eventosService: EventosService,
     private financeiroService: FinanceiroService,
     private router: Router
-  ) {
-    this.eventosService.getEventoAtivo()
-      .subscribe(e => this.eventoId = e.id);
+  ) {}
+
+  ionViewWillEnter() {
+    this.carregarEvento();
+  }
+
+  carregarEvento() {
+    this.carregando = true;
+
+    this.eventosService.getEventoAtivo().subscribe({
+      next: e => {
+        this.eventoId = e.id;
+        this.carregando = false;
+      },
+      error: err => {
+        console.error('Erro ao carregar evento para categoria financeira', err);
+        this.carregando = false;
+      }
+    });
   }
 
   salvar() {
-    if (!this.eventoId) return;
+    if (!this.eventoId || this.carregando) return;
+
+    this.carregando = true;
 
     this.financeiroService.criarCategoria({
       eventoId: this.eventoId,
       nome: this.nome
-    }).subscribe(() => {
-      this.router.navigateByUrl('/financeiro');
+    }).subscribe({
+      next: () => {
+        this.carregando = false;
+        this.router.navigateByUrl('/financeiro');
+      },
+      error: err => {
+        console.error('Erro ao criar categoria financeira', err);
+        this.carregando = false;
+      }
     });
   }
 }

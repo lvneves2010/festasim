@@ -13,7 +13,7 @@
     <ion-card-header>
       <ion-card-title>{{ evento.nome }}</ion-card-title>
       <ion-card-subtitle>
-        {{ evento.dataEvento | date:'dd/MM/yyyy' }}
+        {{ evento.dataEvento | date:'dd/MM/yyyy':'UTC' }}
       </ion-card-subtitle>
     </ion-card-header>
   </ion-card>
@@ -25,7 +25,9 @@
 
     <ion-card-content>
       <p>Total: <strong>{{ totalConvidados }}</strong></p>
+      <p>Total com acompanhantes: <strong>{{ totalConvidadosComAcompanhantes }}</strong></p>
       <p>Confirmados: <strong>{{ totalConfirmados }}</strong></p>
+      <p>Confirmados + acompanhantes: <strong>{{ totalConfirmadosComAcompanhantes }}</strong></p>
     </ion-card-content>
   </ion-card>
   <!-- CRONOGRAMA -->
@@ -49,5 +51,9 @@
       <p>Pago: <strong>R$ {{ totalPago }}</strong></p>
     </ion-card-content>
   </ion-card>
+
+  <ion-text class="app-version">
+    Versao {{ appVersion }}
+  </ion-text>
 
 </ion-content>
