@@ -54,18 +54,25 @@ export class ConvidadosPage {
 
     this.eventosService.getEventoAtivo().subscribe({
       next: evento => {
+        if (!evento) {
+          this.carregando = false;
+          return;
+        }
+
         this.evento = evento;
 
-        this.convidadosService.getConvidadosPorEvento(evento.id).subscribe({
-          next: convidados => {
-            this.convidados = convidados;
-            this.carregando = false;
-          },
-          error: err => {
-            console.error('Erro ao carregar convidados', err);
-            this.carregando = false;
-          }
-        });
+        this.convidadosService
+          .getConvidadosPorEvento(evento.id)
+          .subscribe({
+            next: convidados => {
+              this.convidados = convidados;
+              this.carregando = false;
+            },
+            error: err => {
+              console.error('Erro ao carregar convidados', err);
+              this.carregando = false;
+            }
+          });
       },
       error: () => {
         this.carregando = false;
@@ -94,7 +101,11 @@ export class ConvidadosPage {
       observacoes: (convidado.observacoes || '').trim()
     };
 
-    this.convidadosService.atualizarConvidado(convidado.id, payload).subscribe({
+    
+  this.convidadosService
+    .atualizarConvidado(this.evento!.id, convidado.id, payload)
+    .subscribe
+    ({
       next: async () => {
         await this.exibirToast(sucesso, 'success');
       },
@@ -211,16 +222,20 @@ export class ConvidadosPage {
     this.atualizarConvidado(convidado, 'Acompanhantes atualizados.');
   }
 
-  deletar(id: number) {
-    this.convidadosService.deletarConvidado(id).subscribe({
-      next: async () => {
-        this.convidados = this.convidados.filter(c => c.id !== id);
-        await this.exibirToast('Convidado removido.', 'success');
-      },
-      error: async err => {
-        console.error('Erro ao deletar convidado', err);
-        await this.exibirToast('Erro ao remover convidado.', 'danger');
-      }
-    });
+  deletar(id: string) {
+    if (!this.evento) return;
+
+    this.convidadosService
+      .deletarConvidado(this.evento.id, id)
+      .subscribe({
+        next: async () => {
+          this.convidados = this.convidados.filter(c => c.id !== id);
+          await this.exibirToast('Convidado removido.', 'success');
+        },
+        error: async err => {
+          console.error('Erro ao deletar convidado', err);
+          await this.exibirToast('Erro ao remover convidado.', 'danger');
+        }
+      });
   }
 }

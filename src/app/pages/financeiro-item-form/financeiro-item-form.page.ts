@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { EventosService } from '../../services/eventos.service';
 import { FinanceiroService } from '../../services/financeiro.service';
+import { EventoGet } from '../../models/evento-get.model';
+import { FinanceiroCategoria } from '../../models/financeiro-categoria.model';
 
 @Component({
   selector: 'app-financeiro-item-form',
@@ -11,12 +13,12 @@ import { FinanceiroService } from '../../services/financeiro.service';
 })
 export class FinanceiroItemFormPage {
 
-  eventoId?: number;
-  categorias: any[] = [];
+  evento?: EventoGet;
+  categorias: FinanceiroCategoria[] = [];
   carregando = false;
 
-  form: any = {
-    categoriaFinanceiraId: null,
+  form = {
+    categoriaId: '',
     descricao: '',
     valorPrevisto: 0
   };
@@ -36,7 +38,12 @@ export class FinanceiroItemFormPage {
 
     this.eventosService.getEventoAtivo().subscribe({
       next: evento => {
-        this.eventoId = evento.id;
+        if (!evento) {
+          this.router.navigateByUrl('/evento');
+          return;
+        }
+
+        this.evento = evento;
 
         this.financeiroService
           .getCategoriasPorEvento(evento.id)
@@ -46,41 +53,38 @@ export class FinanceiroItemFormPage {
               this.carregando = false;
             },
             error: err => {
-              console.error('Erro ao carregar categorias financeiras', err);
+              console.error('Erro ao carregar categorias', err);
               this.carregando = false;
             }
           });
       },
-      error: err => {
-        console.error('Erro ao carregar evento ativo', err);
+      error: () => {
         this.carregando = false;
+        this.router.navigateByUrl('/evento');
       }
     });
   }
 
   salvar() {
-    if (!this.eventoId || this.carregando) return;
+    if (!this.evento || this.carregando) return;
 
     this.carregando = true;
 
-    const payload = {
-      eventoId: this.eventoId,
-      categoriaFinanceiraId: Number(this.form.categoriaFinanceiraId),
-      descricao: this.form.descricao,
-      valorPrevisto: Number(this.form.valorPrevisto),
-      valorPago: null
-    };
-
-    this.financeiroService.criarItem(payload).subscribe({
-      next: () => {
-        this.carregando = false;
-        this.router.navigateByUrl('/financeiro');
-      },
-      error: err => {
-        console.error('Erro ao criar item financeiro', err);
-        this.carregando = false;
-      }
-    });
+    this.financeiroService
+      .criarItem(this.evento.id, {
+        categoriaId: this.form.categoriaId,
+        descricao: this.form.descricao.trim(),
+        valorPrevisto: Number(this.form.valorPrevisto)
+      })
+      .subscribe({
+        next: () => {
+          this.carregando = false;
+          this.router.navigateByUrl('/financeiro');
+        },
+        error: err => {
+          console.error('Erro ao criar item financeiro', err);
+          this.carregando = false;
+        }
+      });
   }
 }
-``

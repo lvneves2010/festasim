@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { EventosService } from '../../services/eventos.service';
 import { FinanceiroService } from '../../services/financeiro.service';
+import { EventoGet } from '../../models/evento-get.model';
 
 @Component({
   selector: 'app-financeiro-categoria-form',
@@ -12,7 +13,7 @@ import { FinanceiroService } from '../../services/financeiro.service';
 export class FinanceiroCategoriaFormPage {
 
   nome = '';
-  eventoId?: number;
+  evento?: EventoGet;
   carregando = false;
 
   constructor(
@@ -26,38 +27,34 @@ export class FinanceiroCategoriaFormPage {
   }
 
   carregarEvento() {
-    this.carregando = true;
-
     this.eventosService.getEventoAtivo().subscribe({
-      next: e => {
-        this.eventoId = e.id;
-        this.carregando = false;
+      next: evento => {
+        if (!evento) {
+          this.router.navigateByUrl('/evento');
+          return;
+        }
+        this.evento = evento;
       },
-      error: err => {
-        console.error('Erro ao carregar evento para categoria financeira', err);
-        this.carregando = false;
-      }
+      error: () => this.router.navigateByUrl('/evento')
     });
   }
 
   salvar() {
-    if (!this.eventoId || this.carregando) return;
+    if (!this.evento || this.carregando || !this.nome.trim()) return;
 
     this.carregando = true;
 
-    this.financeiroService.criarCategoria({
-      eventoId: this.eventoId,
-      nome: this.nome
-    }).subscribe({
-      next: () => {
-        this.carregando = false;
-        this.router.navigateByUrl('/financeiro');
-      },
-      error: err => {
-        console.error('Erro ao criar categoria financeira', err);
-        this.carregando = false;
-      }
-    });
+    this.financeiroService
+      .criarCategoria(this.evento.id, this.nome.trim())
+      .subscribe({
+        next: () => {
+          this.carregando = false;
+          this.router.navigateByUrl('/financeiro');
+        },
+        error: err => {
+          console.error('Erro ao criar categoria financeira', err);
+          this.carregando = false;
+        }
+      });
   }
 }
-``

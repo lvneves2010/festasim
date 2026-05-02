@@ -2,6 +2,9 @@ import { Component } from '@angular/core';
 import { AlertController, IonSelect, ToastController } from '@ionic/angular';
 import { EventosService } from '../../services/eventos.service';
 import { FinanceiroService } from '../../services/financeiro.service';
+import { EventoGet } from '../../models/evento-get.model';
+import { FinanceiroCategoria } from '../../models/financeiro-categoria.model';
+import { FinanceiroItem } from '../../models/financeiro-item.model';
 
 @Component({
   selector: 'app-financeiro',
@@ -11,9 +14,9 @@ import { FinanceiroService } from '../../services/financeiro.service';
 })
 export class FinanceiroPage {
 
-  eventoId?: number;
-  categorias: any[] = [];
-  itens: any[] = [];
+  evento?: EventoGet;
+  categorias: FinanceiroCategoria[] = [];
+  itens: FinanceiroItem[] = [];
   carregando = false;
 
   constructor(
@@ -42,11 +45,16 @@ export class FinanceiroPage {
 
     this.eventosService.getEventoAtivo().subscribe({
       next: evento => {
-        this.eventoId = evento.id;
+        if (!evento) {
+          this.carregando = false;
+          return;
+        }
+
+        this.evento = evento;
 
         this.financeiroService
           .getCategoriasPorEvento(evento.id)
-          .subscribe(categorias => this.categorias = categorias);
+          .subscribe(c => (this.categorias = c));
 
         this.financeiroService
           .getItensPorEvento(evento.id)
@@ -55,51 +63,50 @@ export class FinanceiroPage {
             this.carregando = false;
           });
       },
-      error: () => this.carregando = false
+      error: () => (this.carregando = false)
     });
   }
 
-  deletarItem(id: number) {
-    this.financeiroService.deletarItem(id).subscribe(async () => {
+  deletarItem(id: string) {
+    if (!this.evento) return;
+
+    this.financeiroService.deletarItem(this.evento.id, id).subscribe(async () => {
       this.itens = this.itens.filter(i => i.id !== id);
       await this.exibirToast('Despesa removida.', 'success');
     });
   }
 
-  statusColor(item: any): string {
+  statusColor(item: FinanceiroItem): string {
     return item.valorPago ? 'success' : 'medium';
   }
 
-  
-  statusTexto(item: any): string {
+  statusTexto(item: FinanceiroItem): string {
     return item.valorPago ? 'Pago' : 'Pendente';
   }
 
-  
   abrirSelectorStatus(select: IonSelect) {
     select.open();
   }
 
-  
-  alterarStatus(item: any) {
-    const payload = {
-      eventoId: this.eventoId,
-      categoriaFinanceiraId: item.categoriaFinanceiraId,
-      descricao: item.descricao,
-      valorPrevisto: item.valorPrevisto,
-      valorPago: item.valorPago
-    };
+  alterarStatus(item: FinanceiroItem) {
+    if (!this.evento) return;
 
-    this.financeiroService.atualizarItem(item.id, payload).subscribe({
-      next: async () => {
+    const novoValorPago = item.valorPago ? null : item.valorPrevisto;
+    item.valorPago = novoValorPago;
+
+    this.financeiroService
+      .atualizarItem(this.evento.id, item.id, {
+        categoriaId: item.categoriaId,
+        descricao: item.descricao,
+        valorPrevisto: item.valorPrevisto,
+        valorPago: novoValorPago
+      })
+      .subscribe(async () => {
         await this.exibirToast('Despesa atualizada.', 'success');
-      },
-      error: err =>
-        console.error('Erro ao atualizar status financeiro', err)
-    });
+      });
   }
 
-  async editarItem(item: any) {
+  async editarItem(item: FinanceiroItem) {
     const alert = await this.alertController.create({
       header: 'Editar despesa',
       inputs: [
@@ -123,13 +130,20 @@ export class FinanceiroPage {
           handler: data => {
             const descricao = (data.descricao || '').trim();
             const valorPrevisto = Number(data.valorPrevisto) || 0;
+
             if (!descricao || valorPrevisto <= 0) {
-              this.exibirToast('Descricao e valor previsto sao obrigatorios.', 'danger');
+              this.exibirToast(
+                'Descricao e valor previsto sao obrigatorios.',
+                'danger'
+              );
               return false;
             }
 
+            // Atualiza localmente
             item.descricao = descricao;
             item.valorPrevisto = valorPrevisto;
+
+            // Vai para escolha de categoria
             this.editarCategoria(item);
             return true;
           }
@@ -140,7 +154,12 @@ export class FinanceiroPage {
     await alert.present();
   }
 
-  async editarCategoria(item: any) {
+  async editarCategoria(item: FinanceiroItem) {
+    if (!this.evento) {
+      await this.exibirToast('Evento nao encontrado.', 'danger');
+      return;
+    }
+
     if (!this.categorias.length) {
       await this.exibirToast('Nenhuma categoria disponivel.', 'danger');
       return;
@@ -150,7 +169,7 @@ export class FinanceiroPage {
       type: 'radio' as const,
       label: categoria.nome,
       value: categoria.id,
-      checked: categoria.id === item.categoriaFinanceiraId
+      checked: categoria.id === item.categoriaId
     }));
 
     const alert = await this.alertController.create({
@@ -160,30 +179,31 @@ export class FinanceiroPage {
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Salvar',
-          handler: categoriaFinanceiraId => {
-            item.categoriaFinanceiraId = Number(categoriaFinanceiraId);
-            const categoriaSelecionada = this.categorias.find(c => c.id === item.categoriaFinanceiraId);
-            if (categoriaSelecionada) {
-              item.categoria = categoriaSelecionada.nome;
-            }
+          handler: categoriaId => {
+            item.categoriaId = categoriaId;
 
-            const payload = {
-              eventoId: this.eventoId,
-              categoriaFinanceiraId: item.categoriaFinanceiraId,
-              descricao: item.descricao,
-              valorPrevisto: Number(item.valorPrevisto) || 0,
-              valorPago: item.valorPago
-            };
-
-            this.financeiroService.atualizarItem(item.id, payload).subscribe({
-              next: async () => {
-                await this.exibirToast('Despesa editada com sucesso.', 'success');
-              },
-              error: async err => {
-                console.error('Erro ao editar despesa', err);
-                await this.exibirToast('Erro ao editar despesa.', 'danger');
-              }
-            });
+            this.financeiroService
+              .atualizarItem(this.evento!.id, item.id, {
+                categoriaId: item.categoriaId,
+                descricao: item.descricao,
+                valorPrevisto: item.valorPrevisto,
+                valorPago: item.valorPago ?? null
+              })
+              .subscribe({
+                next: async () => {
+                  await this.exibirToast(
+                    'Despesa editada com sucesso.',
+                    'success'
+                  );
+                },
+                error: async err => {
+                  console.error('Erro ao editar despesa', err);
+                  await this.exibirToast(
+                    'Erro ao editar despesa.',
+                    'danger'
+                  );
+                }
+              });
 
             return true;
           }
@@ -193,5 +213,4 @@ export class FinanceiroPage {
 
     await alert.present();
   }
-
 }

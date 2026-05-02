@@ -1,8 +1,7 @@
 export interface EventoGet {
-  id: number;
+  id: string;
   nome: string;
-  dataEvento: string;
+  dataEvento?: string;
   local?: string;
   observacoes?: string;
-  ativo: boolean;
 }

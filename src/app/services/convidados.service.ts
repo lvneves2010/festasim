@@ -1,6 +1,16 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp
+} from 'firebase/firestore';
+import { from, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { db } from '../firebase';
 import { ConvidadoGet } from '../models/convidado-get.model';
 
 @Injectable({
@@ -8,24 +18,61 @@ import { ConvidadoGet } from '../models/convidado-get.model';
 })
 export class ConvidadosService {
 
-  private apiUrl = `${environment.apiUrl}/convidados`;
-
-  constructor(private http: HttpClient) {}
-
-  getConvidadosPorEvento(eventoId: number) {
-    return this.http.get<ConvidadoGet[]>(`${this.apiUrl}/evento/${eventoId}`);
+  private convidadosCollection(eventoId: string) {
+    return collection(db, 'eventos', eventoId, 'convidados');
   }
 
-  criarConvidado(payload: any) {
-    return this.http.post(this.apiUrl, payload);
+  getConvidadosPorEvento(eventoId: string): Observable<ConvidadoGet[]> {
+    return from(getDocs(this.convidadosCollection(eventoId))).pipe(
+      map(snapshot =>
+        snapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            nome: data['nome'],
+            email: data['email'],
+            confirmacaoPresenca: data['confirmacaoPresenca'] ?? null,
+            quantidadeAcompanhantes: data['quantidadeAcompanhantes'] ?? 0,
+            observacoes: data['observacoes']
+          } as ConvidadoGet;
+        })
+      )
+    );
   }
 
-  deletarConvidado(id: number) {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+  criarConvidado(eventoId: string, payload: Partial<ConvidadoGet>): Observable<void> {
+    const docPayload = {
+      nome: payload.nome,
+      email: payload.email || null,
+      confirmacaoPresenca: payload.confirmacaoPresenca ?? null,
+      quantidadeAcompanhantes: payload.quantidadeAcompanhantes || 0,
+      observacoes: payload.observacoes || null,
+      criadoEm: Timestamp.now()
+    };
+
+    return from(addDoc(this.convidadosCollection(eventoId), docPayload)).pipe(
+      map(() => void 0)
+    );
   }
 
-  atualizarConvidado(id: number, payload: any) {
-    return this.http.put(`${this.apiUrl}/${id}`, payload);
+  atualizarConvidado(eventoId: string, convidadoId: string, payload: Partial<ConvidadoGet>) {
+    const ref = doc(db, 'eventos', eventoId, 'convidados', convidadoId);
+
+    const docPayload = {
+      nome: payload.nome,
+      email: payload.email || null,
+      confirmacaoPresenca: payload.confirmacaoPresenca ?? null,
+      quantidadeAcompanhantes: payload.quantidadeAcompanhantes || 0,
+      observacoes: payload.observacoes || null
+    };
+
+    return from(updateDoc(ref, docPayload)).pipe(
+      map(() => void 0)
+    );
   }
 
+  deletarConvidado(eventoId: string, convidadoId: string) {
+    const ref = doc(db, 'eventos', eventoId, 'convidados', convidadoId);
+    return from(deleteDoc(ref)).pipe(map(() => void 0));
+  }
 }

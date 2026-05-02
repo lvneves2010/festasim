@@ -51,23 +51,32 @@ export class HomePage implements OnDestroy {
 
     this.eventosService.getEventoAtivo().pipe(takeUntil(this.destroy$)).subscribe({
       next: evento => {
+        if (!evento) {
+          this.carregando = false;
+          console.error('Nenhum evento encontrado');
+          return;
+        }
+
         this.evento = evento;
 
+        // Carregar convidados
         this.convidadosService
           .getConvidadosPorEvento(evento.id)
           .pipe(takeUntil(this.destroy$))
           .subscribe(c => this.convidados = c);
 
+        // // Carregar tarefas
         this.tarefasService
           .getTarefasPorEvento(evento.id)
           .pipe(takeUntil(this.destroy$))
           .subscribe(t => this.tarefas = t);
 
+        // // Carregar itens financeiros
         this.financeiroService
           .getItensPorEvento(evento.id)
           .pipe(takeUntil(this.destroy$))
-          .subscribe(i => {
-            this.itensFinanceiros = i;
+          .subscribe((itens: any[]) => {
+            this.itensFinanceiros = itens;
             this.carregando = false;
           });
       },

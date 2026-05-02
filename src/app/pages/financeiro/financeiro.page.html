@@ -27,7 +27,7 @@
       <ion-label>
 
         <h2>{{ item.descricao }}</h2>
-        <p>Categoria: {{ item.categoria }}</p>
+        <p>Categoria: {{ item.categoriaNome || 'Sem categoria' }}</p>
         <p>Valor previsto: R$ {{ item.valorPrevisto }}</p>
 
         <!-- ✅ CHIP DE STATUS -->

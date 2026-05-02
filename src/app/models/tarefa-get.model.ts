@@ -1,11 +1,11 @@
 export enum StatusTarefa {
-  Pendente = 0,
-  EmAndamento = 1,
-  Concluida = 2
+  Pendente = 'Pendente',
+  EmAndamento = 'EmAndamento',
+  Concluida = 'Concluida'
 }
 
 export interface TarefaGet {
-  id: number;
+  id: string;
   descricao: string;
   dataLimite: string;
   status: StatusTarefa;

@@ -48,6 +48,11 @@ export class CronogramaPage {
 
     this.eventosService.getEventoAtivo().subscribe({
       next: evento => {
+        if (!evento) {
+          this.carregando = false;
+          return;
+        }
+
         this.evento = evento;
 
         this.tarefasService
@@ -91,48 +96,46 @@ export class CronogramaPage {
     }
   }
 
-  deletar(id: number) {
-    this.tarefasService.deletarTarefa(id).subscribe({
-      next: async () => {
-        this.tarefas = this.tarefas.filter(t => t.id !== id);
-        await this.exibirToast('Tarefa removida.', 'success');
-      },
-      error: async err => {
-        console.error('Erro ao deletar tarefa', err);
-        await this.exibirToast('Erro ao remover tarefa.', 'danger');
-      }
-    });
+  deletar(id: string) {
+    if (!this.evento) return;
+
+    this.tarefasService
+      .deletarTarefa(this.evento.id, id)
+      .subscribe({
+        next: async () => {
+          this.tarefas = this.tarefas.filter(t => t.id !== id);
+          await this.exibirToast('Tarefa removida.', 'success');
+        },
+        error: async err => {
+          console.error('Erro ao deletar tarefa', err);
+          await this.exibirToast('Erro ao remover tarefa.', 'danger');
+        }
+      });
   }
 
   alterarStatus(tarefa: TarefaGet, event: CustomEvent) {
-    if (!this.evento) {
-      console.error('Evento ativo nao encontrado ao atualizar status.');
-      return;
-    }
+    if (!this.evento) return;
 
-    const novoStatus = Number(event.detail.value);
+    const novoStatus = event.detail.value as StatusTarefa;
     const statusAnterior = tarefa.status;
-    tarefa.status = novoStatus as StatusTarefa;
+    tarefa.status = novoStatus;
 
-    this.tarefasService.atualizarTarefa(tarefa.id, {
-      id: tarefa.id,
-      descricao: tarefa.descricao,
-      dataLimite: tarefa.dataLimite,
-      status: novoStatus
-    }).subscribe({
-      next: async () => {
-        await this.exibirToast('Status atualizado.', 'success');
-      },
-      error: async err => {
-        console.error('Erro ao atualizar status da tarefa', err, { payload: {
-          descricao: tarefa.descricao,
-          dataLimite: this.toDateOnly(tarefa.dataLimite),
-          status: novoStatus
-        }});
-        tarefa.status = statusAnterior;
-        await this.exibirToast('Erro ao atualizar status.', 'danger');
-      }
-    });
+    this.tarefasService
+      .atualizarTarefa(this.evento.id, tarefa.id, {
+        descricao: tarefa.descricao,
+        dataLimite: tarefa.dataLimite,
+        status: novoStatus
+      })
+      .subscribe({
+        next: async () => {
+          await this.exibirToast('Status atualizado.', 'success');
+        },
+        error: async err => {
+          console.error('Erro ao atualizar status', err);
+          tarefa.status = statusAnterior;
+          await this.exibirToast('Erro ao atualizar status.', 'danger');
+        }
+      });
   }
 
   async editarTarefa(tarefa: TarefaGet) {
@@ -156,6 +159,11 @@ export class CronogramaPage {
         {
           text: 'Salvar',
           handler: data => {
+            if (!this.evento) {
+              this.exibirToast('Evento nao encontrado.', 'danger');
+              return false;
+            }
+
             const descricao = (data.descricao || '').trim();
             const dataLimite = this.toDateOnly(data.dataLimite || '');
 
@@ -164,23 +172,25 @@ export class CronogramaPage {
               return false;
             }
 
+            // Atualiza localmente (UI)
             tarefa.descricao = descricao;
             tarefa.dataLimite = dataLimite;
 
-            this.tarefasService.atualizarTarefa(tarefa.id, {
-              id: tarefa.id,
-              descricao,
-              dataLimite,
-              status: tarefa.status
-            }).subscribe({
-              next: async () => {
-                await this.exibirToast('Tarefa editada com sucesso.', 'success');
-              },
-              error: async err => {
-                console.error('Erro ao editar tarefa', err);
-                await this.exibirToast('Erro ao editar tarefa.', 'danger');
-              }
-            });
+            this.tarefasService
+              .atualizarTarefa(this.evento.id, tarefa.id, {
+                descricao,
+                dataLimite,
+                status: tarefa.status
+              })
+              .subscribe({
+                next: async () => {
+                  await this.exibirToast('Tarefa editada com sucesso.', 'success');
+                },
+                error: async err => {
+                  console.error('Erro ao editar tarefa', err);
+                  await this.exibirToast('Erro ao editar tarefa.', 'danger');
+                }
+              });
 
             return true;
           }

@@ -57,8 +57,13 @@ export class ConvidadosFormPage {
 
   carregarEvento() {
     this.carregando = true;
+
     this.eventosService.getEventoAtivo().subscribe({
       next: evento => {
+        if (!evento) {
+          this.router.navigateByUrl('/evento');
+          return;
+        }
         this.evento = evento;
         this.carregando = false;
       },
@@ -69,6 +74,7 @@ export class ConvidadosFormPage {
     });
   }
 
+
   salvar() {
     if (!this.evento || this.carregando) return;
 
@@ -78,7 +84,6 @@ export class ConvidadosFormPage {
     const email = this.form.email.trim();
 
     const payload = {
-      eventoId: this.evento.id,
       nome,
       email: email || this.gerarEmailFallback(nome),
       confirmacaoPresenca: null,
@@ -86,17 +91,19 @@ export class ConvidadosFormPage {
       observacoes: this.form.observacoes.trim() || ''
     };
 
-    this.convidadosService.criarConvidado(payload).subscribe({
-      next: async () => {
-        this.carregando = false;
-        await this.exibirToast('Convidado salvo com sucesso.', 'success');
-        this.router.navigateByUrl('/convidados');
-      },
-      error: async err => {
-        console.error(err);
-        this.carregando = false;
-        await this.exibirToast('Nao foi possivel salvar o convidado.', 'danger');
-      }
-    });
+    this.convidadosService
+      .criarConvidado(this.evento.id, payload)
+      .subscribe({
+        next: async () => {
+          this.carregando = false;
+          await this.exibirToast('Convidado salvo com sucesso.', 'success');
+          this.router.navigateByUrl('/convidados');
+        },
+        error: async err => {
+          console.error(err);
+          this.carregando = false;
+          await this.exibirToast('Nao foi possivel salvar o convidado.', 'danger');
+        }
+      });
   }
 }

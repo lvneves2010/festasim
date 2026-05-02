@@ -30,7 +30,13 @@ export class CronogramaFormPage {
 
   carregarEvento() {
     this.eventosService.getEventoAtivo().subscribe({
-      next: evento => this.evento = evento,
+      next: evento => {
+        if (!evento) {
+          this.router.navigateByUrl('/evento');
+          return;
+        }
+        this.evento = evento;
+      },
       error: () => this.router.navigateByUrl('/evento')
     });
   }
@@ -41,20 +47,22 @@ export class CronogramaFormPage {
     this.carregando = true;
 
     const payload = {
-      eventoId: this.evento.id,
-      descricao: this.form.descricao,
+      descricao: this.form.descricao.trim(),
       dataLimite: this.form.dataLimite
     };
 
-    this.tarefasService.criarTarefa(payload).subscribe({
-      next: () => {
-        this.carregando = false;
-        this.router.navigateByUrl('/cronograma');
-      },
-      error: err => {
-        console.error('Erro ao criar tarefa', err);
-        this.carregando = false;
-      }
-    });
+    this.tarefasService
+      .criarTarefa(this.evento.id, payload)
+      .subscribe({
+        next: () => {
+          this.carregando = false;
+          this.router.navigateByUrl('/cronograma');
+        },
+        error: err => {
+          console.error('Erro ao criar tarefa', err);
+          this.carregando = false;
+        }
+      });
   }
+
 }

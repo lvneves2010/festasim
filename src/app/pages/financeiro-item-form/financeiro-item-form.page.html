@@ -14,7 +14,7 @@
     <ion-item>
       <ion-label position="stacked">Categoria</ion-label>
       <ion-select
-        [(ngModel)]="form.categoriaFinanceiraId"
+        [(ngModel)]="form.categoriaId"
         name="categoria"
         placeholder="Selecione uma categoria"
         required>
@@ -60,9 +60,9 @@
       class="ion-margin-top"
       [disabled]="
         carregando ||
-        !eventoId ||
+        !evento ||
         categorias.length === 0 ||
-        !form.categoriaFinanceiraId ||
+        !form.categoriaId ||
         !form.descricao ||
         form.valorPrevisto <= 0
       "

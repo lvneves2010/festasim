@@ -1,10 +1,8 @@
 export interface ConvidadoGet {
-  id: number;
+  id: string;
   nome: string;
-  email: string;
+  email?: string;
   confirmacaoPresenca: boolean | null;
-  quantidadeAcompanhantes: number;
+  quantidadeAcompanhantes?: number;
   observacoes?: string;
-  dataCriacao: string;
 }
-``
