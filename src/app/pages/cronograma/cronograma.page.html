@@ -46,18 +46,23 @@
         </ion-chip>
 
         <!-- Select invisível, apenas para interação -->
-        <ion-select
-          #statusSelect
-          name="statusSelect-{{tarefa.id}}"
-          interface="popover"
-          [(ngModel)]="tarefa.status"
-          (ionChange)="alterarStatus(tarefa, $event)"
-          class="hidden-select">
-
-          <ion-select-option [value]="0">Pendente</ion-select-option>
-          <ion-select-option [value]="1">Em andamento</ion-select-option>
-          <ion-select-option [value]="2">Concluída</ion-select-option>
-        </ion-select>
+          <ion-select
+            #statusSelect
+            interface="popover"
+            [ngModel]="tarefa.status"
+            (ionChange)="alterarStatus(tarefa, $event)"
+            class="hidden-select"
+          >
+            <ion-select-option [value]="StatusTarefa.Pendente">
+              Pendente
+            </ion-select-option>
+            <ion-select-option [value]="StatusTarefa.EmAndamento">
+              Em andamento
+            </ion-select-option>
+            <ion-select-option [value]="StatusTarefa.Concluida">
+              Concluída
+            </ion-select-option>
+          </ion-select>
         </ion-item>
       </ion-label>
     </ion-item>

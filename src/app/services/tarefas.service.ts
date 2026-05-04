@@ -33,7 +33,7 @@ export class TarefasService {
             dataLimite: data['dataLimite']
               ? data['dataLimite'].toDate().toISOString()
               : '',
-            status: data['status'] as StatusTarefa
+            status: (data['status'] as StatusTarefa) ?? StatusTarefa.Pendente
           } as TarefaGet;
         })
       )
@@ -55,19 +55,30 @@ export class TarefasService {
     );
   }
 
-  atualizarTarefa(eventoId: string, tarefaId: string, payload: Partial<TarefaGet>) {
+    atualizarTarefa(
+    eventoId: string,
+    tarefaId: string,
+    payload: Partial<TarefaGet>
+    ) {
     const ref = doc(db, 'eventos', eventoId, 'tarefas', tarefaId);
 
-    const docPayload = {
-      descricao: payload.descricao,
-      dataLimite: payload.dataLimite
-        ? Timestamp.fromDate(new Date(payload.dataLimite))
-        : null,
-      status: payload.status
-    };
+    const statusSeguro =
+        payload.status === StatusTarefa.Pendente ||
+        payload.status === StatusTarefa.EmAndamento ||
+        payload.status === StatusTarefa.Concluida
+        ? payload.status
+        : StatusTarefa.Pendente;
 
-    return from(updateDoc(ref, docPayload)).pipe(map(() => void 0));
-  }
+    return from(
+        updateDoc(ref, {
+        descricao: payload.descricao,
+        dataLimite: payload.dataLimite
+            ? Timestamp.fromDate(new Date(payload.dataLimite))
+            : null,
+        status: statusSeguro
+        })
+    ).pipe(map(() => void 0));
+    }
 
   deletarTarefa(eventoId: string, tarefaId: string) {
     const ref = doc(db, 'eventos', eventoId, 'tarefas', tarefaId);

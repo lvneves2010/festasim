@@ -13,6 +13,9 @@ import { TarefaGet, StatusTarefa } from '../../models/tarefa-get.model';
 })
 export class CronogramaPage {
 
+  
+  StatusTarefa = StatusTarefa; // 👈 EXATAMENTE ISSO
+
   evento?: EventoGet;
   tarefas: TarefaGet[] = [];
   carregando = false;
@@ -118,6 +121,7 @@ export class CronogramaPage {
 
     const novoStatus = event.detail.value as StatusTarefa;
     const statusAnterior = tarefa.status;
+
     tarefa.status = novoStatus;
 
     this.tarefasService
